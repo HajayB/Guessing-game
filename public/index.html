@@ -19,12 +19,37 @@
       font-size: 3rem;
       font-weight: bold;
     }
-  </style>
-    <script defer src="https://cdn.socket.io/4.7.2/socket.io.min.js" defer></script>
-    
-    <script src="/js/index.js" type="module" defer></script>
+
+    #msgBox {
+  padding: 10px 16px;
+  margin: 12px 0;
+  border-radius: 6px;
+  font-size: 14px;
+  display: none;
+}
+
+#msgBox.success {
+  background: #e1f7e7;
+  color: #0a7a2d;
+  border: 1px solid #0a7a2d;
+}
+
+#msgBox.error {
+  background: #fde4e4;
+  color: #a80000;
+  border: 1px solid #a80000;
+}
+
+.hidden {
+  display: none;
+}
+</style>
+<script src="/js/index.js" type="module" defer></script>
 </head>
 <body>
+
+  <div id="msgBox" class="hidden"></div>
+
   <div style="text-align:center; color:#042c4f">
     <h1><b>Guess the answer</b></h1>
 

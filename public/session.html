@@ -1,36 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Game Session</title>
-  <link rel="stylesheet" href="/css/session.css">
-
-  <script src="/js/session.js" type="module" defer></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Session</title>
+<link rel="stylesheet" href="/css/session.css">
 </head>
 <body>
-  <div class="container">
-    <div class="game-area">
-      <div class="session-banner" id="sessionBanner">Session Created By: </div>
-      <div class="system-messages" id="systemMessages"></div>
-      <div class="question-inputs" id="questionInputs">
-        <input type="text" id="questionText" placeholder="Question">
-        <input type="text" id="answerText" placeholder="Answer">
-        <button id="add_Question">Add Question</button>
-        <input type="number" id="duration" placeholder="Duration" value="60" min="30" max="90">
-      </div>
-      <button id="startGameBtn">Start Game</button>
-    </div>
-    <div class="sidebar">
-      <div class="leaderboard" id="leaderboard"></div>
-      <div class="chat-messages" id="chatMessages"></div>
-      <div class="chat-input">
-        <input type="text" id="chatInput" placeholder="Type message...">
-        <button id="sendChatBtn">Send</button>
-      </div>
-    </div>
+ <div id="msgBox" class="hidden"></div>
+  <!-- Session Banner -->
+  <div id="sessionBanner">
+    <span id="sessionId">Session: ABC123</span>
+    <span id="timer" class="timer">00:00</span>
   </div>
 
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  
+  <!-- Main landscape layout -->
+  <div id="mainContainer">
+
+    <!-- Leaderboard / Player list -->
+    <aside id="leaderboard">
+      <h3>Leaderboard</h3>
+      <div id="playersList">
+        <!-- Players will be dynamically inserted here -->
+      </div>
+      <div id="activePlayers">
+        <p>Active Players: <span id="activeCount">0</span></p>
+      </div>
+    </aside>
+
+    <!-- Middle panel -->
+    <main id="middlePanel">
+      <div id="questionCard">
+        <h2 id="questionText">Waiting for the master to start...</h2>
+        <div id="questions">
+          <div id="gameArea">
+            <!-- Question and answer area -->
+          </div>
+          <!-- master controls panel -->
+          <div id="masterControls" class="master-controls">
+          <input id="questionInput" placeholder="Enter question..." />
+          <input id="answerInput" placeholder="Correct answer..." />
+          <button id="add_question">Add Question</button>
+          </div>
+          <div class="start_round">
+            <button id="startQuestionBtn">Start</button>
+          </div>
+          <!-- player answer box -->
+          <div id="playerAnswerBox" class="player-answer">
+          <input id="playerGuessInput" placeholder="Your answer..." />
+          <button id="submitGuessBtn">Submit</button>
+          <div id="attemptsDisplay">Attempts left: 3</div>
+          </div>
+
+        </div>
+      </div>
+
+      <div id="systemMessages">
+        <!-- System messages will appear here -->
+      </div>
+    </main>
+
+    <!-- Chat panel -->
+    <aside id="chatPanel">
+      <h3>Chat</h3>
+      <div id="chatMessages">
+        <!-- Chat messages will appear here -->
+      </div>
+      <div id="chatInputArea">
+        <input type="text" id="chatInput" placeholder="Type your message...">
+        <button id="sendChat">Send</button>
+      </div>
+    </aside>
+
+  </div>
+
+<script type="module" src="/js/session.js"></script>
 </body>
 </html>

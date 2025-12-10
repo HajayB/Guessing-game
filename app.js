@@ -10,14 +10,9 @@ const { Server } = require('socket.io');
 // Initialize Express app and HTTP server
 const app = express();
 const server = http.createServer(app);
-// const io = new Server(server);
+const io = new Server(server);
 const socketHandler = require('./socketHandler');
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  }
-})
+
 // Connect to MongoDB
 connectDB();
 // Use the socket handler

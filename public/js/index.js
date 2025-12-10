@@ -1,8 +1,28 @@
-import { io } from "https://cdn.socket.io/4.7.2/socket.io.esm.min.js";
-
+import { io } from "https://cdn.socket.io/4.8.1/socket.io.esm.min.js";
 
 const socket = io();
+//ERROR & SUCCESS MESSAGE FUNCTION
+function showMessage(type, text) {
+    const box = document.getElementById("msgBox");
 
+    // Reset previous styles
+    box.className = ""; 
+
+    // Set type
+    if (type === "success") {
+        box.classList.add("success");
+    } else if (type === "error") {
+        box.classList.add("error");
+    }
+
+    box.textContent = text;
+    box.style.display = "block";
+
+    // Auto-hide after 3 sec
+    setTimeout(() => {
+        box.style.display = "none";
+    }, 3000);
+}
 
 // Input + buttons
 const nameInput = document.querySelector("input[placeholder='Enter Name']");
@@ -15,51 +35,67 @@ const closeModal = document.getElementById("closeModal");
 const confirmJoin = document.getElementById("confirmJoin");
 const sessionIdInput = document.getElementById("sessionIdInput");
 
-// Create a session
+// ---------------------------------------
+// Create Session
+// ---------------------------------------
 createBtn.onclick = () => {
-  const masterName = nameInput.value.trim();
-  if (!masterName) return setTimeout(()=>{
-    alert("Enter your name first");}, 1000);
+  const userName = nameInput.value.trim();
+  if (!userName) return alert("Enter your name first");
 
-  const sessionId = crypto.randomUUID().replace(/-/g, '').slice(0,6); // temporary unique session ID
+  const sessionId = crypto.randomUUID().replace(/-/g, '').slice(0, 6);
+  const userId = crypto.randomUUID().slice(0, 8);
 
-  socket.emit("create_session", { sessionId, masterName });
+  socket.emit("create_session", { sessionId, userName, userId });
 
-  // Redirect later to your session page
-  console.log("Session created:", sessionId, masterName);
-  sessionStorage.setItem("masterName", masterName);
+  sessionStorage.setItem("userName", userName);
   sessionStorage.setItem("sessionId", sessionId);
+  sessionStorage.setItem("userId", userId);
+
   window.location.href = `/session/${sessionId}`;
 };
 
-// Join session → open modal
+// ---------------------------------------
+// Join Session → open modal
+// ---------------------------------------
 joinBtn.onclick = () => {
   if (!nameInput.value.trim()) return alert("Enter your name first");
   modal.style.display = "flex";
-
 };
 
-// Modal join confirm
+// Confirm join
 confirmJoin.onclick = () => {
   const sessionId = sessionIdInput.value.trim();
   const userName = nameInput.value.trim();
+  let userId = sessionStorage.getItem("userId");
+  if (!userId) userId = crypto.randomUUID(); // persistent userId for join
 
-  if (!sessionId) return alert("Enter a session ID");
+  if (!sessionId || !userName) return alert("Enter your name and session ID");  
 
-  socket.emit("join_session", { sessionId, userName });
+  const sessionIdPattern = /^[A-Za-z0-9]{6}$/;
+  if (!sessionIdPattern.test(sessionId)) {
+    showMessage("error", "Invalid session ID. Must be 6 letters/numbers.");
+    return;
+  }
+  sessionStorage.setItem("userName", userName);
+  sessionStorage.setItem("sessionId", sessionId);
+  sessionStorage.setItem("userId", userId);
+  socket.emit("join_session", { sessionId, userName, userId });
+}  
 
+// Global socket listeners
+socket.on("message:success", () => {
+  const userName = sessionStorage.getItem("userName");
+  const sessionId = sessionStorage.getItem("sessionId");
   window.location.href = `/session/${sessionId}`;
-};
+});
 
+socket.on("message:error", (msg) => {
+  showMessage("error", msg.text);
+});
+
+// ---------------------------------------
 // Close modal
+// ---------------------------------------
 closeModal.onclick = () => {
   modal.style.display = "none";
 };
-
-// Listen for system messages
-socket.on("message:new", (msg) => {
-  console.log("System message:", msg);
-
-  if (msg.text.includes("Session not found")) alert("Invalid Session ID");
-  if (msg.text.includes("Game in progress")) alert("Session already in progress");
-});
