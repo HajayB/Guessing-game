@@ -96,11 +96,6 @@ socket.on('message:success', (data) => {
     sessionIdBanner.textContent = `Session ID: ${data.sessionId}`;
   });
 
-  // Messages about others joining
-  socket.on('message:new', (data) => {
-    addSystemMessage(data.text); // e.g., "JB joined the session"
-  });
-
 
 // ------------------------
 // Player Controls
@@ -132,9 +127,11 @@ startQuestionBtn.addEventListener("click", () => {
       duration: 60
     }
   });
+  startQuestionBtn.disabled = true;
 
   questionInput.value = "";
   answerInput.value = "";
+
 });
 
 // ------------------------
@@ -195,7 +192,11 @@ socket.on("master:changed", ({ newMaster, players }) => {
   addSystemMessage(`New master: ${newMaster}`);
   renderPlayers(players);
   const masterPlayer = players.find(p => p.userId === userId);
-  if (masterPlayer?.role === "master") applyRoleUI("master");
+  if (masterPlayer?.role === "master"){
+    startQuestionBtn.disabled = false;
+     applyRoleUI("master");
+  } 
+      
   else applyRoleUI("player");
 });
 

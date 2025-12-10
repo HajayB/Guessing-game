@@ -18,9 +18,7 @@ socketHandler(io);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Define API routes
-app.use('/api/users', require('./routes/userRoutes'));
-app.use('/api/sessions', require('./routes/sessionRoutes'));
+
 
 
 // Serve frontend static files

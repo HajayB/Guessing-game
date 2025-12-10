@@ -474,7 +474,7 @@ function socketHandler(io) {
         timestamp: new Date()
       });
 
-      console.log("Questions:", sessions[sessionId].questions);
+      
 
       broadcastSessionState(io, sessionId);
       // startQuestion(io, sessionId);
