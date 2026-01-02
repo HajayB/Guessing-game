@@ -406,6 +406,16 @@ function socketHandler(io) {
     socket.on('start_question', ({ sessionId, question }) => {
       const players = playersDetails[sessionId];
       if (!players) return;
+
+      // Check minimum 3 connected players before starting a question
+      const connectedPlayers = players.filter(p => p.connected);
+      if (connectedPlayers.length < 3) {
+        socket.emit('message:error', { 
+          text: `Need at least 3 players to start. Currently: ${connectedPlayers.length} connected.` 
+        });
+        return;
+      }
+
       // Find the current master from session
         const session = sessions[sessionId];
         if (session.awaitTimeout) {

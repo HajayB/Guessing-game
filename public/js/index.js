@@ -3,29 +3,29 @@ import { io } from "https://cdn.socket.io/4.8.1/socket.io.esm.min.js";
 const socket = io();
 //ERROR & SUCCESS MESSAGE FUNCTION
 function showMessage(type, text) {
-    const box = document.getElementById("msgBox");
+  const box = document.getElementById("msgBox");
 
-    // Reset previous styles
-    box.className = ""; 
+  // Reset previous styles
+  box.className = "";
 
-    // Set type
-    if (type === "success") {
-        box.classList.add("success");
-    } else if (type === "error") {
-        box.classList.add("error");
-    }
+  // Set type
+  if (type === "success") {
+    box.classList.add("success");
+  } else if (type === "error") {
+    box.classList.add("error");
+  }
 
-    box.textContent = text;
-    box.style.display = "block";
+  box.textContent = text;
+  box.style.display = "block";
 
-    // Auto-hide after 3 sec
-    setTimeout(() => {
-        box.style.display = "none";
-    }, 3000);
+  // Auto-hide after 3 sec
+  setTimeout(() => {
+    box.style.display = "none";
+  }, 3000);
 }
 
 // Input + buttons
-const nameInput = document.querySelector("input[placeholder='Enter Name']");
+const nameInput = document.getElementById("nameInput");
 const createBtn = document.getElementById("createSessionBtn");
 const joinBtn = document.getElementById("joinSessionBtn");
 
@@ -34,6 +34,13 @@ const modal = document.getElementById("sessionModal");
 const closeModal = document.getElementById("closeModal");
 const confirmJoin = document.getElementById("confirmJoin");
 const sessionIdInput = document.getElementById("sessionIdInput");
+const modalMsgBox = document.getElementById("modalMsgBox");
+
+// Helper to show error in modal
+function showModalError(text) {
+  modalMsgBox.textContent = text;
+  modalMsgBox.style.display = "block";
+}
 
 // ---------------------------------------
 // Create Session
@@ -69,18 +76,21 @@ confirmJoin.onclick = () => {
   let userId = sessionStorage.getItem("userId");
   if (!userId) userId = crypto.randomUUID(); // persistent userId for join
 
-  if (!sessionId || !userName) return alert("Enter your name and session ID");  
+  if (!sessionId || !userName) {
+    showModalError("Please enter both your name and session ID");
+    return;
+  }
 
   const sessionIdPattern = /^[A-Za-z0-9]{6}$/;
   if (!sessionIdPattern.test(sessionId)) {
-    showMessage("error", "Invalid session ID. Must be 6 letters/numbers.");
+    showModalError("Invalid session ID. Must be exactly 6 letters/numbers.");
     return;
   }
   sessionStorage.setItem("userName", userName);
   sessionStorage.setItem("sessionId", sessionId);
   sessionStorage.setItem("userId", userId);
   socket.emit("join_session", { sessionId, userName, userId });
-}  
+}
 
 // Global socket listeners
 socket.on("message:success", () => {
@@ -90,7 +100,12 @@ socket.on("message:success", () => {
 });
 
 socket.on("message:error", (msg) => {
-  showMessage("error", msg.text);
+  // Show error in modal if it's open, otherwise show in main page
+  if (modal.style.display === "flex") {
+    showModalError(msg.text);
+  } else {
+    showMessage("error", msg.text);
+  }
 });
 
 // ---------------------------------------

@@ -1,86 +1,318 @@
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Guess the Answer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
-      margin: 0;
-      background: #e6eef5;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
     }
+
+    .container {
+      text-align: center;
+      width: 100%;
+      max-width: 500px;
+    }
+
     h1 {
-      font-size: 3rem;
-      font-weight: bold;
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
     }
 
+    .subtitle {
+      color: rgba(255, 255, 255, 0.85);
+      font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      padding: clamp(25px, 5vw, 40px);
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+    }
+
+    .input-group {
+      margin-bottom: 25px;
+    }
+
+    .input-group label {
+      display: block;
+      text-align: left;
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 15px 20px;
+      font-size: 1rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+    }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    @media (min-width: 400px) {
+      .btn-group {
+        flex-direction: row;
+      }
+    }
+
+    .btn {
+      flex: 1;
+      padding: 15px 20px;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(56, 239, 125, 0.4);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    /* Message Box */
     #msgBox {
-  padding: 10px 16px;
-  margin: 12px 0;
-  border-radius: 6px;
-  font-size: 14px;
-  display: none;
-}
+      padding: 12px 18px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      display: none;
+      animation: slideIn 0.3s ease;
+    }
 
-#msgBox.success {
-  background: #e1f7e7;
-  color: #0a7a2d;
-  border: 1px solid #0a7a2d;
-}
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
 
-#msgBox.error {
-  background: #fde4e4;
-  color: #a80000;
-  border: 1px solid #a80000;
-}
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
-.hidden {
-  display: none;
-}
-</style>
-<script src="/js/index.js" type="module" defer></script>
+    #msgBox.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    #msgBox.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(5px);
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: white;
+      padding: clamp(25px, 5vw, 35px);
+      width: 100%;
+      max-width: 360px;
+      border-radius: 20px;
+      text-align: center;
+      animation: modalIn 0.3s ease;
+    }
+
+    @keyframes modalIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .modal-content h3 {
+      font-size: 1.3rem;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .modal-content input {
+      width: 100%;
+      padding: 14px 18px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      font-size: 1rem;
+      margin-bottom: 20px;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .modal-content input:focus {
+      outline: none;
+      border-color: #11998e;
+      box-shadow: 0 0 0 4px rgba(17, 153, 142, 0.15);
+    }
+
+    .modal-btns {
+      display: flex;
+      gap: 10px;
+    }
+
+    .modal-btns .btn {
+      flex: 1;
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      box-shadow: 0 8px 25px rgba(255, 75, 43, 0.4);
+    }
+
+    .modal-error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      padding: 10px 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 0.9rem;
+      animation: shake 0.4s ease;
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(-5px);
+      }
+
+      75% {
+        transform: translateX(5px);
+      }
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 25px;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.85rem;
+    }
+  </style>
+  <script src="/js/index.js" type="module" defer></script>
 </head>
+
 <body>
 
-  <div id="msgBox" class="hidden"></div>
+  <div class="container">
+    <h1>🎯 Guess the Answer</h1>
+    <p class="subtitle">Challenge your friends in real-time!</p>
 
-  <div style="text-align:center; color:#042c4f">
-    <h1><b>Guess the answer</b></h1>
+    <div class="card">
+      <div id="msgBox"></div>
 
-    <div style="margin-top:40px; background:#ffffff; padding:30px; width:550px; height: 200px; margin:auto; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
-      <input 
-        id="nameInput"
-        type="text" 
-        placeholder="Enter Name" 
-        style="width:50%; padding:12px; font-size:1rem; border-radius:8px; border:1px solid #ccc; margin-bottom:70px;"
-      />
+      <div class="input-group">
+        <label for="nameInput">Your Name</label>
+        <input id="nameInput" type="text" placeholder="Enter your name..." autocomplete="off" />
+      </div>
 
-      <div style="display:flex; justify-content:space-between; gap:15px;">
-        <button id="createSessionBtn" style="flex:1;  padding:12px; font-size:1rem; border:none; border-radius:8px; cursor:pointer; background:#007bff; color:white; font-weight:bold;">
-          Create a session
+      <div class="btn-group">
+        <button id="createSessionBtn" class="btn btn-primary">
+          ✨ Create Session
         </button>
-
-        <button id="joinSessionBtn" style="flex:1; padding:12px; font-size:1rem; border:none; border-radius:8px; cursor:pointer; background:#28a745; color:white; font-weight:bold;">
-          Join a session
+        <button id="joinSessionBtn" class="btn btn-secondary">
+          🚀 Join Session
         </button>
       </div>
     </div>
+
+    <p class="footer">Made with ❤️ by Basit Ajayi</p>
   </div>
 
   <!-- Modal -->
-  <div id="sessionModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); justify-content:center; align-items:center;">
-    <div style="background:white; padding:25px; width:300px; border-radius:10px; text-align:center;">
-      <h3>Enter Session ID</h3>
-      <input type="text" id="sessionIdInput" placeholder="Session ID" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; margin-top:10px;">
-      <div style="margin-top:20px; display:flex; gap:10px;">
-        <button id="confirmJoin" style="flex:1; padding:10px; background:#28a745; color:white; border:none; border-radius:8px; cursor:pointer;">Join</button>
-        <button id="closeModal" style="flex:1; padding:10px; background:#dc3545; color:white; border:none; border-radius:8px; cursor:pointer;">Cancel</button>
+  <div id="sessionModal" class="modal-overlay">
+    <div class="modal-content">
+      <h3>🔗 Join a Session</h3>
+      <div id="modalMsgBox" class="modal-error" style="display:none;"></div>
+      <input type="text" id="sessionIdInput" placeholder="Enter 6-digit Session ID" maxlength="6" autocomplete="off">
+      <div class="modal-btns">
+        <button id="confirmJoin" class="btn btn-secondary">Join</button>
+        <button id="closeModal" class="btn btn-danger">Cancel</button>
       </div>
     </div>
   </div>
@@ -89,14 +321,26 @@
     const joinBtn = document.getElementById('joinSessionBtn');
     const modal = document.getElementById('sessionModal');
     const closeModal = document.getElementById('closeModal');
+    const modalMsgBox = document.getElementById('modalMsgBox');
 
     joinBtn.onclick = () => {
       modal.style.display = 'flex';
+      modalMsgBox.style.display = 'none'; // Reset error on open
     };
 
     closeModal.onclick = () => {
       modal.style.display = 'none';
+      modalMsgBox.style.display = 'none';
+    };
+
+    // Close modal on outside click
+    modal.onclick = (e) => {
+      if (e.target === modal) {
+        modal.style.display = 'none';
+        modalMsgBox.style.display = 'none';
+      }
     };
   </script>
 </body>
+
 </html>

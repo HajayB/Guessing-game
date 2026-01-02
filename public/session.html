@@ -1,17 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Game Session</title>
-<link rel="stylesheet" href="/css/session.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Session</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/session.css">
 </head>
+
 <body>
- <div id="msgBox" class="hidden"></div>
+  <div id="msgBox" class="hidden"></div>
   <!-- Session Banner -->
   <div id="sessionBanner">
-    <span id="sessionId">Session: ABC123</span>
-    <span id="timer" class="timer">00:00</span>
+    <span id="sessionId">Session: ------</span>
+    <span id="timer" class="timer">⏱️ 00:00</span>
   </div>
 
   <!-- Main landscape layout -->
@@ -19,12 +22,12 @@
 
     <!-- Leaderboard / Player list -->
     <aside id="leaderboard">
-      <h3>Leaderboard</h3>
+      <h3>🏆 Leaderboard</h3>
       <div id="playersList">
         <!-- Players will be dynamically inserted here -->
       </div>
       <div id="activePlayers">
-        <p>Active Players: <span id="activeCount">0</span></p>
+        <p>👥 Active: <span id="activeCount">0</span></p>
       </div>
     </aside>
 
@@ -38,17 +41,18 @@
           </div>
           <!-- master controls panel -->
           <div id="masterControls" class="master-controls">
-          <input id="questionInput" placeholder="Enter question..." />
-          <input id="answerInput" placeholder="Correct answer..." />
+            <input id="questionInput" placeholder="Enter your question..." />
+            <input id="answerInput" placeholder="Enter the correct answer..." />
           </div>
           <div class="start_round">
-            <button id="startQuestionBtn">Start Question</button>
+            <button id="startQuestionBtn" disabled>🚀 Start Question</button>
+            <span id="playerWaitingText">⏳ Waiting for players to join (need 3)...</span>
           </div>
           <!-- player answer box -->
           <div id="playerAnswerBox" class="player-answer">
-          <input id="playerGuessInput" placeholder="Your answer..." />
-          <button id="submitGuessBtn">Submit</button>
-          <div id="attemptsDisplay">Attempts left: 3</div>
+            <input id="playerGuessInput" placeholder="Type your answer..." />
+            <button id="submitGuessBtn">✅ Submit</button>
+            <div id="attemptsDisplay">💡 Attempts left: 3</div>
           </div>
 
         </div>
@@ -61,18 +65,19 @@
 
     <!-- Chat panel -->
     <aside id="chatPanel">
-      <h3>Chat</h3>
+      <h3>💬 Chat</h3>
       <div id="chatMessages">
         <!-- Chat messages will appear here -->
       </div>
       <div id="chatInputArea">
-        <input type="text" id="chatInput" placeholder="Type your message...">
+        <input type="text" id="chatInput" placeholder="Type a message...">
         <button id="sendChat">Send</button>
       </div>
     </aside>
 
   </div>
 
-<script type="module" src="/js/session.js"></script>
+  <script type="module" src="/js/session.js"></script>
 </body>
+
 </html>

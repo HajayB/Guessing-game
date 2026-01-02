@@ -27,12 +27,16 @@ const attemptsDisplay = document.getElementById("attemptsDisplay");
 const questionInput = document.getElementById("questionInput");
 const answerInput = document.getElementById("answerInput");
 const msgBox = document.getElementById("msgBox");
+const playerWaitingText = document.getElementById("playerWaitingText");
 
 let sessionId = sessionStorage.getItem("sessionId");
 let userId = sessionStorage.getItem("userId");
 let userName = sessionStorage.getItem("userName");
 let userRole = null;
 let timerInterval = null;
+let currentPlayerCount = 0;
+
+const MIN_PLAYERS = 3;
 
 // ------------------------
 // Helper Functions
@@ -73,28 +77,49 @@ function renderPlayers(players) {
 }
 
 // ------------------------
+// Update Start Button State
+// ------------------------
+function updateStartButtonState() {
+  if (userRole !== "master") return;
+
+  if (currentPlayerCount >= MIN_PLAYERS) {
+    startQuestionBtn.disabled = false;
+    playerWaitingText.textContent = "✅ Ready to start!";
+    playerWaitingText.style.color = "#38ef7d";
+  } else {
+    startQuestionBtn.disabled = true;
+    const needed = MIN_PLAYERS - currentPlayerCount;
+    playerWaitingText.textContent = `⏳ Waiting for ${needed} more player${needed > 1 ? 's' : ''} (need ${MIN_PLAYERS})...`;
+    playerWaitingText.style.color = "rgba(255,255,255,0.7)";
+  }
+}
+
+// ------------------------
 // Role-based UI
 // ------------------------
 function applyRoleUI(role) {
   userRole = role;
 
   if (role === "master") {
-    masterControls.style.display = "block";
-    startQuestionBtn.style.display = "block";
+    masterControls.style.display = "flex";
+    startQuestionBtn.style.display = "inline-block";
+    playerWaitingText.style.display = "inline";
     playerAnswerBox.style.display = "none";
     questionTextEl.textContent = "You are the Master! Submit a question to start.";
+    updateStartButtonState();
   } else {
     masterControls.style.display = "none";
     startQuestionBtn.style.display = "none";
-    playerAnswerBox.style.display = "none"; // show only when question starts
+    playerWaitingText.style.display = "none";
+    playerAnswerBox.style.display = "none";
     questionTextEl.textContent = "Waiting for the master to start...";
   }
 }
 
 socket.on('message:success', (data) => {
-    addSystemMessage(data.text); // e.g., "You joined 6ae20c"
-    sessionIdBanner.textContent = `Session ID: ${data.sessionId}`;
-  });
+  addSystemMessage(data.text);
+  sessionIdBanner.textContent = `Session: ${data.sessionId}`;
+});
 
 
 // ------------------------
@@ -108,7 +133,7 @@ submitGuessBtn.addEventListener("click", () => {
 });
 
 socket.on("guess:result", ({ correct, attemptsLeft }) => {
-  attemptsDisplay.textContent = `Attempts left: ${attemptsLeft}`;
+  attemptsDisplay.textContent = `💡 Attempts left: ${attemptsLeft}`;
 });
 
 // ------------------------
@@ -156,22 +181,31 @@ socket.on("role:assigned", ({ role }) => applyRoleUI(role));
 socket.on("session:state", ({ connectedPlayers, connectedPlayersCount }) => {
   renderPlayers(connectedPlayers);
   activeCountEl.textContent = connectedPlayersCount;
+  currentPlayerCount = connectedPlayersCount;
+  updateStartButtonState();
 });
 
 socket.on("game:question", ({ question, players, duration }) => {
   questionTextEl.textContent = question;
   if (userRole === "player") playerAnswerBox.style.display = "flex";
 
+  // Hide master controls and waiting text during active question
+  if (userRole === "master") {
+    masterControls.style.display = "none";
+    startQuestionBtn.style.display = "none";
+    playerWaitingText.style.display = "none";
+  }
+
   const me = players.find(p => p.userId === userId);
-  if (me) attemptsDisplay.textContent = `Attempts left: ${me.attemptsLeft}`;
+  if (me) attemptsDisplay.textContent = `💡 Attempts left: ${me.attemptsLeft}`;
 
   if (timerInterval) clearInterval(timerInterval);
   let timeLeft = duration;
-  timerEl.textContent = `${timeLeft}s`;
+  timerEl.textContent = `⏱️ ${timeLeft}s`;
 
   timerInterval = setInterval(() => {
     timeLeft--;
-    timerEl.textContent = `${timeLeft}s`;
+    timerEl.textContent = `⏱️ ${timeLeft}s`;
     if (timeLeft <= 0) clearInterval(timerInterval);
   }, 1000);
 });
@@ -180,33 +214,41 @@ socket.on("question:ended", ({ winner, answer, message }) => {
   addSystemMessage(message || `Answer: ${answer}`);
   if (userRole === "player") playerAnswerBox.style.display = "none";
   if (timerInterval) clearInterval(timerInterval);
-  timerEl.textContent = "0s";
+  timerEl.textContent = "⏱️ 00:00";
 });
 
 socket.on("game:ended", ({ players, winner }) => {
-  addSystemMessage(`Game over! Winner: ${winner || "No one"}`);
+  addSystemMessage(`🎉 Game over! Winner: ${winner || "No one"}`);
   renderPlayers(players);
 });
 
 socket.on("master:changed", ({ newMaster, players }) => {
-  addSystemMessage(`New master: ${newMaster}`);
+  addSystemMessage(`👑 New master: ${newMaster}`);
   renderPlayers(players);
   const masterPlayer = players.find(p => p.userId === userId);
-  if (masterPlayer?.role === "master"){
+  if (masterPlayer?.role === "master") {
     startQuestionBtn.disabled = false;
-     applyRoleUI("master");
-  } 
-      
+    applyRoleUI("master");
+  }
+
   else applyRoleUI("player");
+});
+
+socket.on("round:awaiting_question", ({ nextMaster, message }) => {
+  addSystemMessage(message || `Waiting for ${nextMaster} to submit a question.`);
 });
 
 socket.on("chat:new", ({ user, message }) => addChatMessage(user, message));
 socket.on("message:new", ({ text }) => addSystemMessage(text));
-socket.on("message:error", ({ text }) => addSystemMessage(`Error: ${text}`));
+socket.on("message:error", ({ text }) => {
+  addSystemMessage(`❌ Error: ${text}`);
+  showMessage("error", text);
+});
 
 // ------------------------
 // Join session on load
 // ------------------------
 if (sessionId && userId) {
+  sessionIdBanner.textContent = `Session: ${sessionId}`;
   socket.emit("join_session", { sessionId, userName, userId });
 }
