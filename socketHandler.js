@@ -1,5 +1,25 @@
 const sessions = {}; // in-memory sessions
-const playersDetails = {}; 
+const playersDetails = {};
+const lastGuessTime = {}; // debounce tracking: { socketId: timestamp }
+
+const PLAYER_COLORS = [
+  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+  '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
+  '#F0B27A', '#82E0AA', '#F1948A', '#AED6F1', '#D7BDE2'
+];
+const PLAYER_AVATARS = [
+  '🦊', '🐼', '🦁', '🐯', '🐸', '🦄', '🐙', '🦜',
+  '🐺', '🦋', '🐬', '🦅', '🐝', '🐢', '🦎'
+];
+
+function getPlayerAppearance(sessionId) {
+  const players = playersDetails[sessionId] || [];
+  const usedIndices = players.map(p => p.colorIndex).filter(i => i !== undefined);
+  let index = 0;
+  while (usedIndices.includes(index) && index < PLAYER_COLORS.length) index++;
+  if (index >= PLAYER_COLORS.length) index = Math.floor(Math.random() * PLAYER_COLORS.length);
+  return { colorIndex: index, color: PLAYER_COLORS[index], avatar: PLAYER_AVATARS[index] };
+}
 
 // ------------------------
 // Broadcast current session state
@@ -18,6 +38,7 @@ function broadcastSessionState(io, sessionId) {
   io.to(sessionId).emit('session:state', {
     sessionId,
     masterId: session.masterId,
+    creatorUserId: session.creatorUserId,
     masterName: players.find(p => p.role === 'master')?.name || null,
     players, // full list including disconnected
     connectedPlayers,
@@ -301,6 +322,7 @@ function socketHandler(io) {
 
       sessions[sessionId] = {
         masterId: socket.id,
+        creatorUserId: userId,
         inProgress: false,
         questions: [],
         currentQuestionIndex: 0,
@@ -311,6 +333,7 @@ function socketHandler(io) {
         awaitTimeout: null,
       };
 
+      const appearance = getPlayerAppearance(sessionId);
       playersDetails[sessionId] = [{
         userId,
         sessionId,
@@ -320,7 +343,10 @@ function socketHandler(io) {
         attemptsLeft: 3,
         connected: true,
         guessedCorrectly: false,
-        role: 'master'
+        role: 'master',
+        color: appearance.color,
+        avatar: appearance.avatar,
+        colorIndex: appearance.colorIndex
       }];
 
       socket.join(sessionId);
@@ -368,6 +394,7 @@ function socketHandler(io) {
         }
 
         // New player join
+        const joinAppearance = getPlayerAppearance(sessionId);
         const newPlayer = {
           userId,
           sessionId,
@@ -377,7 +404,10 @@ function socketHandler(io) {
           attemptsLeft: 3,
           connected: true,
           guessedCorrectly: false,
-          role: 'player'
+          role: 'player',
+          color: joinAppearance.color,
+          avatar: joinAppearance.avatar,
+          colorIndex: joinAppearance.colorIndex
         };
 
         playersDetails[sessionId].push(newPlayer);
@@ -501,6 +531,14 @@ function socketHandler(io) {
       const player = players.find(p => p.id === socket.id);
       if (!player || player.attemptsLeft <= 0 || session.winner) return;
 
+      // Debounce: 500ms between guesses per player
+      const now = Date.now();
+      if (lastGuessTime[socket.id] && now - lastGuessTime[socket.id] < 500) {
+        socket.emit('message:error', { text: 'Too fast! Wait a moment before guessing again.' });
+        return;
+      }
+      lastGuessTime[socket.id] = now;
+
      const currentQuestion = session.currentQuestion;
 
       if (!currentQuestion) return;
@@ -520,6 +558,36 @@ function socketHandler(io) {
     });
 
     // ------------------------
+    // Typing indicator
+    // ------------------------
+    socket.on('player:typing', ({ sessionId }) => {
+      const players = playersDetails[sessionId];
+      if (!players) return;
+      const player = players.find(p => p.id === socket.id);
+      if (!player || player.role === 'master') return;
+      socket.to(sessionId).emit('player:typing', { name: player.name, avatar: player.avatar });
+    });
+
+    socket.on('player:stop_typing', ({ sessionId }) => {
+      socket.to(sessionId).emit('player:stop_typing', { socketId: socket.id });
+    });
+
+    // ------------------------
+    // Chat typing indicator
+    // ------------------------
+    socket.on('chat:typing', ({ sessionId }) => {
+      const players = playersDetails[sessionId];
+      if (!players) return;
+      const player = players.find(p => p.id === socket.id);
+      if (!player) return;
+      socket.to(sessionId).emit('chat:typing', { name: player.name, avatar: player.avatar });
+    });
+
+    socket.on('chat:stop_typing', ({ sessionId }) => {
+      socket.to(sessionId).emit('chat:stop_typing', { socketId: socket.id });
+    });
+
+    // ------------------------
     // Chat handler
     // ------------------------
     socket.on('chat:send', ({ sessionId, message }) => {
@@ -527,8 +595,70 @@ function socketHandler(io) {
       const { player } = findPlayerByUserId(socket.userId) || {};
       const userName = player?.name || "Unknown";
 
-      const chatData = { user: userName, message, timestamp: new Date() };
+      const chatData = { user: userName, message, color: player?.color, avatar: player?.avatar, timestamp: new Date() };
       io.to(sessionId).emit('chat:new', chatData);
+    });
+
+    // ------------------------
+    // Leave session
+    // ------------------------
+    socket.on('leave_session', ({ sessionId, userId }) => {
+      const players = playersDetails[sessionId];
+      const session = sessions[sessionId];
+      if (!players || !session) return;
+
+      const playerIndex = players.findIndex(p => p.userId === userId);
+      if (playerIndex === -1) return;
+
+      const player = players[playerIndex];
+      const wasMaster = player.role === 'master';
+
+      // Remove player from session
+      players.splice(playerIndex, 1);
+      socket.leave(sessionId);
+
+      io.to(sessionId).emit('message:new', {
+        type: 'system',
+        text: `${player.name} left the session.`,
+        timestamp: new Date()
+      });
+
+      // If no players left, clean up
+      if (players.length === 0 || !players.some(p => p.connected)) {
+        delete sessions[sessionId];
+        delete playersDetails[sessionId];
+        return;
+      }
+
+      // If master left, assign a new one
+      if (wasMaster) {
+        assignNextMaster(io, sessionId, null);
+      }
+
+      broadcastSessionState(io, sessionId);
+    });
+
+    // ------------------------
+    // End session (master only)
+    // ------------------------
+    socket.on('end_session', ({ sessionId, userId }) => {
+      const players = playersDetails[sessionId];
+      const session = sessions[sessionId];
+      if (!players || !session) return;
+
+      if (session.creatorUserId !== userId) {
+        socket.emit('message:error', { text: 'Only the session creator can end the session.' });
+        return;
+      }
+
+      // Clear any active timers
+      if (session.timer) clearTimeout(session.timer);
+      if (session.awaitTimeout) clearTimeout(session.awaitTimeout);
+
+      io.to(sessionId).emit('session:ended_by_master');
+
+      delete sessions[sessionId];
+      delete playersDetails[sessionId];
     });
 
     // ------------------------

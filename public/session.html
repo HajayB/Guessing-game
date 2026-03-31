@@ -13,7 +13,14 @@
   <div id="msgBox" class="hidden"></div>
   <!-- Session Banner -->
   <div id="sessionBanner">
-    <span id="sessionId">Session: ------</span>
+    <div id="sessionInfo">
+      <span id="sessionId">Session: ------</span>
+      <button id="copyInviteBtn" class="copy-btn" title="Copy session code">📋 Copy Code</button>
+    </div>
+    <div id="sessionActions">
+      <button id="leaveSessionBtn" class="session-action-btn leave-btn">🚪 Leave</button>
+      <button id="endSessionBtn" class="session-action-btn end-btn" style="display:none;">⛔ End Session</button>
+    </div>
     <span id="timer" class="timer">⏱️ 00:00</span>
   </div>
 
@@ -75,6 +82,19 @@
       </div>
     </aside>
 
+  </div>
+
+  <!-- End Game Modal -->
+  <div id="endGameModal" class="modal-overlay">
+    <div class="modal-content end-game-modal">
+      <h2 id="endGameTitle">Game Over!</h2>
+      <div id="endGameWinner" class="end-game-winner"></div>
+      <div id="endGameRankings" class="end-game-rankings"></div>
+      <div class="end-game-actions">
+        <button id="playAgainBtn" class="btn-play-again">Play Again</button>
+        <button id="goHomeBtn" class="btn-go-home">Leave</button>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="/js/session.js"></script>

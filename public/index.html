@@ -267,6 +267,55 @@
       }
     }
 
+    /* How to Play */
+    .how-to-play {
+      margin-bottom: 20px;
+    }
+
+    .how-toggle-btn {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #fff;
+      padding: 10px 24px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: 'Poppins', sans-serif;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 100%;
+    }
+
+    .how-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .how-content {
+      margin-top: 12px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      padding: 16px 20px;
+      text-align: left;
+      animation: slideIn 0.3s ease;
+    }
+
+    .how-step {
+      padding: 8px 0;
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.9);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .how-step:last-child {
+      border-bottom: none;
+    }
+
+    .how-icon {
+      font-weight: 700;
+      margin-right: 8px;
+      color: #fff;
+    }
+
     /* Footer */
     .footer {
       margin-top: 25px;
@@ -282,6 +331,16 @@
   <div class="container">
     <h1>🎯 Guess the Answer</h1>
     <p class="subtitle">Challenge your friends in real-time!</p>
+
+    <div class="how-to-play">
+      <button type="button" id="howToPlayToggle" class="how-toggle-btn">How to Play ▾</button>
+      <div id="howToPlayContent" class="how-content" style="display:none;">
+        <div class="how-step"><span class="how-icon">1.</span> Create a session and share the <strong>session code</strong> with friends</div>
+        <div class="how-step"><span class="how-icon">2.</span> The <strong>Master</strong> sets a question for everyone to answer</div>
+        <div class="how-step"><span class="how-icon">3.</span> First to answer correctly wins <strong>10 points</strong> and becomes the new Master</div>
+        <div class="how-step"><span class="how-icon">4.</span> Need at least <strong>3 players</strong> to start — the more the better!</div>
+      </div>
+    </div>
 
     <div class="card">
       <div id="msgBox"></div>
@@ -318,6 +377,15 @@
   </div>
 
   <script>
+    // How to Play toggle
+    const howToggle = document.getElementById('howToPlayToggle');
+    const howContent = document.getElementById('howToPlayContent');
+    howToggle.onclick = () => {
+      const open = howContent.style.display !== 'none';
+      howContent.style.display = open ? 'none' : 'block';
+      howToggle.textContent = open ? 'How to Play ▾' : 'How to Play ▴';
+    };
+
     const joinBtn = document.getElementById('joinSessionBtn');
     const modal = document.getElementById('sessionModal');
     const closeModal = document.getElementById('closeModal');
@@ -340,6 +408,7 @@
         modalMsgBox.style.display = 'none';
       }
     };
+
   </script>
 </body>
 
